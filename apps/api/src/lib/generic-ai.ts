@@ -26,7 +26,6 @@ const defaultProvider: Provider = process.env.OLLAMA_BASE_URL
   : process.env.AZURE_OPENAI_API_KEY
   ? "azure"
   : "openai";
-
 const providerList: Record<Provider, any> = {
   openai: createOpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -60,6 +59,7 @@ const providerList: Record<Provider, any> = {
   azure: createAzure({
     resourceName: process.env.AZURE_OPENAI_RESOURCE_NAME,
     apiKey: process.env.AZURE_OPENAI_API_KEY,
+    apiVersion: process.env.AZURE_OPENAI_API_VERSION
   }),
 };
 
