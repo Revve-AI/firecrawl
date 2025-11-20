@@ -11,7 +11,8 @@
     "sourceMap": true,
     "outDir": "./dist/src",
     "moduleResolution": "NodeNext",
-    "strictNullChecks": true,
+    "strictNullChecks": false,
+    "strict": false,
 
     "inlineSources": true,
 

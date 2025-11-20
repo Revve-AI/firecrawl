@@ -1,0 +1,47 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Revve Admin User
+    participant Revve as Revve-web<br/>(Backend & RAG)
+    
+    box "Firecrawl Infrastructure" #f0f4f8
+        participant FC_API as Firecrawl API
+        participant FC_DB as Postgres (NuQ)
+        participant FC_Worker as Firecrawl Worker<br/>(nuq-worker)
+    end
+
+    note over Admin, Revve: 1. Configuration Phase
+    Admin->>Revve: Create Crawl Configuration
+    note right of Admin: Defines Target URL, Depth,<br/>and Include/Exclude patterns
+
+    note over Revve, FC_API: 2. Job Submission
+    Revve->>FC_API: POST /v1/crawl
+    note right of Revve: {<br/>  "url": "https://target.com",<br/>  "webhook": "https://revve-web.com/api/hooks/firecrawl"<br/>}
+    
+    FC_API->>FC_DB: Insert Job (Status: 'queued')
+    FC_API-->>Revve: Returns { "id": "crawl_123", "success": true }
+
+    note over FC_DB, FC_Worker: 3. Async Processing
+    loop Polling / Notification
+        FC_Worker->>FC_DB: Claim Job (Status: 'active')
+        FC_Worker->>FC_Worker: 🕷️ Scrape URL & Parse PDF/HTML
+        FC_Worker->>FC_Worker: 📝 Convert to Markdown
+    end
+
+    note over Revve, FC_Worker: 4. Webhook & Indexing
+    
+    par Parallel Webhook Events
+        FC_Worker->>Revve: POST /api/hooks/firecrawl (crawl.page)
+        note left of FC_Worker: Payload contains:<br/>Markdown content,<br/>Metadata, URL
+        
+        activate Revve
+        Revve->>Revve: Chunk & Embed Markdown
+        Revve->>Revve: Save to RAG Vector DB
+        Revve-->>FC_Worker: 200 OK
+        deactivate Revve
+    and
+        FC_Worker->>Revve: POST /api/hooks/firecrawl (crawl.page)
+        Revve-->>FC_Worker: 200 OK
+    end
+
+    FC_Worker->>FC_DB: Update Job (Status: 'completed')
+    FC_Worker->>Revve: POST /api/hooks/firecrawl (crawl.completed)

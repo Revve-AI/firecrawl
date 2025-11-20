@@ -7,6 +7,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { fireworks } from "@ai-sdk/fireworks";
 import { deepinfra } from "@ai-sdk/deepinfra";
 import { createVertex } from "@ai-sdk/google-vertex";
+import { createAzure } from "@ai-sdk/azure";
 
 type Provider =
   | "openai"
@@ -17,9 +18,13 @@ type Provider =
   | "openrouter"
   | "fireworks"
   | "deepinfra"
-  | "vertex";
+  | "vertex"
+  | "azure";
+
 const defaultProvider: Provider = process.env.OLLAMA_BASE_URL
   ? "ollama"
+  : process.env.AZURE_OPENAI_API_KEY
+  ? "azure"
   : "openai";
 
 const providerList: Record<Provider, any> = {
@@ -51,6 +56,10 @@ const providerList: Record<Provider, any> = {
       : {
           keyFile: "./gke-key.json",
         },
+  }),
+  azure: createAzure({
+    resourceName: process.env.AZURE_OPENAI_RESOURCE_NAME,
+    apiKey: process.env.AZURE_OPENAI_API_KEY,
   }),
 };
 
